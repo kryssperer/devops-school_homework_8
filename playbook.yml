@@ -1,0 +1,38 @@
+---
+- hosts: builder
+  become: true
+  vars:
+    TargetUser: ubuntu
+    TargetMachine: 172.31.4.196
+    TargetFolder: /var/lib/tomcat9/webapps
+    
+
+  tasks:
+
+      - name: install software on build server
+        package: 
+          name: 
+            - git
+            - maven
+            - default-jdk
+          state: present 
+
+      - name: build an artifact
+        shell: |
+          git clone https://github.com/boxfuse/boxfuse-sample-java-war-hello.git
+          cd boxfuse-sample-java-war-hello
+          mvn clean package
+          rsync -rva . "{{ TargetUser }}"@"{{ TargetMachine }}":"{{ TargetFolder }}"
+
+- hosts: builder
+  become: true
+
+  tasks:
+
+      - name: install needed packages
+        apt: 
+          name:
+            - wget
+            - default-jdk
+            - tomcat9
+          state: present
